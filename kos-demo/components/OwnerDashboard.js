@@ -1,4 +1,4 @@
-import { kamar, riwayatPendapatan, rupiah } from "@/lib/data";
+import { rupiah } from "@/lib/rooms";
 
 function Stat({ label, value, sub, accent }) {
   return (
@@ -10,7 +10,8 @@ function Stat({ label, value, sub, accent }) {
   );
 }
 
-export default function OwnerDashboard() {
+// Server component: menerima data dari app/admin/page.js (tidak pernah dikirim ke halaman publik)
+export default function OwnerDashboard({ kamar, riwayatPendapatan }) {
   const terisi = kamar.filter((k) => k.terisi);
   const okupansi = Math.round((terisi.length / kamar.length) * 100);
 

@@ -1,26 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { kamar, rupiah } from "@/lib/data";
+import { rupiah } from "@/lib/rooms";
 
-const tanggal = (s) =>
-  new Date(s).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
+const tanggal = (s) => new Date(s).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" });
 
 export default function TenantLogin() {
   const [nomor, setNomor] = useState("");
   const [pin, setPin] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [user, setUser] = useState(null);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    const k = kamar.find((x) => x.id === nomor.trim().toUpperCase());
-    if (!k || !k.terisi || k.penghuni.pin !== pin) {
-      setError("Nomor kamar atau PIN salah.");
-      return;
-    }
+    setLoading(true);
     setError("");
-    setUser(k);
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nomor, pin }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal masuk.");
+      setUser(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {
@@ -30,8 +39,7 @@ export default function TenantLogin() {
   };
 
   if (user) {
-    const p = user.penghuni;
-    const bulanIni = p.tagihan[0];
+    const bulanIni = user.tagihan[0];
     const lunas = bulanIni.status === "Lunas";
 
     return (
@@ -39,10 +47,8 @@ export default function TenantLogin() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm text-slate-500">Selamat datang,</p>
-            <h1 className="text-2xl font-bold">{p.nama}</h1>
-            <p className="text-sm text-slate-500">
-              Kamar {user.id} · Penghuni sejak {tanggal(p.masuk)}
-            </p>
+            <h1 className="text-2xl font-bold">{user.nama}</h1>
+            <p className="text-sm text-slate-500">Kamar {user.kamar.id} · Penghuni sejak {tanggal(user.masuk)}</p>
           </div>
           <button onClick={logout} className="rounded-lg border border-slate-300 px-4 py-2 text-sm hover:bg-slate-100">
             Keluar
@@ -60,7 +66,7 @@ export default function TenantLogin() {
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           <h2 className="border-b border-slate-200 px-5 py-3 font-semibold">Riwayat Tagihan</h2>
           <ul className="divide-y divide-slate-100">
-            {p.tagihan.map((t) => (
+            {user.tagihan.map((t) => (
               <li key={t.bulan} className="flex items-center justify-between px-5 py-3 text-sm">
                 <span>{t.bulan}</span>
                 <span className="flex items-center gap-3">
@@ -116,10 +122,10 @@ export default function TenantLogin() {
 
         <button
           type="submit"
-          disabled={!nomor || pin.length !== 4}
+          disabled={!nomor || pin.length !== 4 || loading}
           className="w-full rounded-lg bg-indigo-600 py-2.5 font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Masuk
+          {loading ? "Memeriksa…" : "Masuk"}
         </button>
 
         <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
