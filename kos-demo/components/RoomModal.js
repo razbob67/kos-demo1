@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { rupiah } from "@/lib/rooms";
+import { rupiah, fasilitasBersama } from "@/lib/rooms";
 
-function FotoSlot({ src, label, className = "" }) {
+function FotoSlot({ src, label, fit = "cover", className = "" }) {
   if (src) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={label} className={`h-full w-full object-cover ${className}`} />;
+    return <img src={src} alt={label} className={`h-full w-full ${fit === "contain" ? "object-contain" : "object-cover"} ${className}`} />;
   }
   return (
     <div className={`grid h-full w-full place-items-center bg-gradient-to-br from-slate-100 to-slate-200 text-slate-400 ${className}`}>
@@ -26,15 +26,22 @@ export default function RoomModal({ room, onClose }) {
   const [aktif, setAktif] = useState(0);
   const f = room.fasilitas;
 
+  const n = room.foto.length;
+  const geser = (d) => setAktif((i) => (i + d + n) % n);
+
   useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose();
+    const onKey = (e) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight") setAktif((i) => (i + 1) % n);
+      if (e.key === "ArrowLeft") setAktif((i) => (i - 1 + n) % n);
+    };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [onClose]);
+  }, [onClose, n]);
 
   const daftar = [
     { ikon: "📐", label: "Ukuran kamar", isi: f.ukuran },
@@ -59,9 +66,30 @@ export default function RoomModal({ room, onClose }) {
       >
         {/* Galeri */}
         <div className="relative">
-          <div className="aspect-[16/9] overflow-hidden">
-            <FotoSlot src={room.foto[aktif]} label={`Foto ${aktif + 1} — belum diunggah`} />
+          <div className="aspect-[4/3] overflow-hidden bg-slate-900 sm:rounded-t-3xl">
+            <FotoSlot src={room.foto[aktif]} label={`Kamar ${room.id} — foto ${aktif + 1}`} fit="contain" />
           </div>
+          {n > 1 && (
+            <>
+              <button
+                onClick={() => geser(-1)}
+                className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-xl shadow hover:bg-white"
+                aria-label="Foto sebelumnya"
+              >
+                ‹
+              </button>
+              <button
+                onClick={() => geser(1)}
+                className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-xl shadow hover:bg-white"
+                aria-label="Foto berikutnya"
+              >
+                ›
+              </button>
+              <span className="absolute bottom-3 right-3 rounded-full bg-black/60 px-2.5 py-1 text-xs text-white">
+                {aktif + 1} / {n}
+              </span>
+            </>
+          )}
           <button
             onClick={onClose}
             className="absolute right-3 top-3 grid h-9 w-9 place-items-center rounded-full bg-white/90 text-lg shadow hover:bg-white"
@@ -78,12 +106,12 @@ export default function RoomModal({ room, onClose }) {
           </span>
         </div>
 
-        <div className="grid grid-cols-4 gap-2 px-5 pt-3">
+        <div className="flex gap-2 overflow-x-auto px-5 pt-3 pb-1">
           {room.foto.map((src, i) => (
             <button
               key={i}
               onClick={() => setAktif(i)}
-              className={`aspect-[4/3] overflow-hidden rounded-lg ring-2 transition ${
+              className={`h-16 w-20 flex-none overflow-hidden rounded-lg ring-2 transition ${
                 aktif === i ? "ring-indigo-500" : "ring-transparent hover:ring-slate-300"
               }`}
               aria-label={`Lihat foto ${i + 1}`}
@@ -130,6 +158,23 @@ export default function RoomModal({ room, onClose }) {
                 <span key={p} className="rounded-full border border-slate-200 px-3 py-1 text-sm">{p}</span>
               ))}
             </div>
+          </div>
+
+          <div>
+            <h3 className="mb-3 font-semibold">Fasilitas bersama</h3>
+            <ul className="space-y-3">
+              {fasilitasBersama.map((b) => (
+                <li key={b.nama} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
+                  <div className="h-16 w-24 flex-none overflow-hidden rounded-lg">
+                    <FotoSlot src={b.foto} label={b.nama} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{b.nama}</p>
+                    <p className="text-xs text-slate-500">{b.keterangan}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
 
           <div

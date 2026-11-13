@@ -32,6 +32,13 @@ export default function PublicRooms() {
               k.terisi ? "border-rose-200" : "border-emerald-200"
             }`}
           >
+            {k.foto[0] && (
+              <div className="relative h-40 overflow-hidden bg-slate-200">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={k.foto[0]} alt={`Kamar ${k.id}`} loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+                <span className="absolute bottom-2 right-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] text-white">📷 {k.foto.length} foto</span>
+              </div>
+            )}
             <div className={`flex items-center justify-between px-5 py-4 ${k.terisi ? "bg-rose-500" : "bg-emerald-500"}`}>
               <span className="text-3xl font-bold text-white">{k.id}</span>
               <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
