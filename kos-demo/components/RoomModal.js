@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { rupiah, fasilitasBersama } from "@/lib/rooms";
+import BookingForm from "@/components/BookingForm";
 
 function FotoSlot({ src, label, fit = "cover", className = "" }) {
   if (src) {
@@ -24,6 +25,7 @@ function FotoSlot({ src, label, fit = "cover", className = "" }) {
 
 export default function RoomModal({ room, onClose }) {
   const [aktif, setAktif] = useState(0);
+  const [pesan, setPesan] = useState(false);
   const f = room.fasilitas;
 
   const n = room.foto.length;
@@ -64,6 +66,19 @@ export default function RoomModal({ room, onClose }) {
         className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
+        {pesan ? (
+          <div className="relative">
+            <button
+              onClick={onClose}
+              className="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-lg hover:bg-slate-200"
+              aria-label="Tutup"
+            >
+              ✕
+            </button>
+            <BookingForm room={room} onBack={() => setPesan(false)} />
+          </div>
+        ) : (
+        <>
         {/* Galeri */}
         <div className="relative">
           <div className="aspect-[4/3] overflow-hidden bg-slate-900 sm:rounded-t-3xl">
@@ -177,16 +192,23 @@ export default function RoomModal({ room, onClose }) {
             </ul>
           </div>
 
-          <div
-            className={`rounded-xl p-4 text-sm ${
-              room.terisi ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700"
-            }`}
-          >
-            {room.terisi
-              ? "Kamar ini sedang ditempati. Silakan cek kamar lain yang masih kosong."
-              : "Kamar ini tersedia dan bisa langsung ditempati."}
-          </div>
+          {room.terisi ? (
+            <div className="rounded-xl bg-rose-50 p-4 text-sm text-rose-700">
+              Kamar ini sedang ditempati. Silakan cek kamar lain yang masih kosong.
+            </div>
+          ) : (
+            <div className="sticky bottom-0 -mx-5 -mb-5 border-t border-slate-200 bg-white/95 p-4 backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6">
+              <button
+                onClick={() => setPesan(true)}
+                className="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-700"
+              >
+                Pesan Kamar Ini — {rupiah(room.harga)}/bulan
+              </button>
+            </div>
+          )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );

@@ -48,3 +48,14 @@ A1 / 1234 · A2 / 5678 · B2 / 4321 (B1 kosong)
 
 ## Catatan
 Data masih dummy di file. Untuk produksi, pindahkan `lib/private.js` ke database (Supabase, Firebase, dll.).
+
+## Pemesanan & pembayaran (Midtrans)
+Alur: klik kamar **kosong** → **Pesan Kamar Ini** → isi form → **Bayar** → halaman pembayaran Midtrans → kembali ke `/order/selesai` (status dicek ulang ke Midtrans).
+
+Environment Variables di Vercel (Settings → Environment Variables), **jangan ditulis di kode**:
+- `MIDTRANS_SERVER_KEY` — Server Key dari Dashboard Midtrans (sandbox diawali `SB-Mid-server-`)
+- `MIDTRANS_IS_PRODUCTION` — isi `true` hanya kalau sudah pakai akun production
+
+Opsional: isi Notification URL di Dashboard Midtrans → `https://<domain>/api/midtrans/notify`.
+
+Tes pembayaran sandbox: pilih Virtual Account, lalu "bayar" nomornya di https://simulator.sandbox.midtrans.com
