@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import PublicRooms from "@/components/PublicRooms";
 import TenantLogin from "@/components/TenantLogin";
@@ -17,10 +16,7 @@ export default function Home() {
         {tab === "penghuni" && <TenantLogin />}
       </main>
       <footer className="pb-8 text-center text-xs text-slate-400">
-        © Rumah Delman · Demo dengan data dummy ·{" "}
-        <Link href="/admin" className="hover:text-slate-600 hover:underline">
-          Akses pemilik
-        </Link>
+        © Rumah Delman · Demo dengan data dummy
       </footer>
     </>
   );
