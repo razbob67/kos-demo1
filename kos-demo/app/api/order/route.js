@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { kamar } from "@/lib/rooms";
 import { SNAP_URL, authHeader, DURASI } from "@/lib/midtrans";
+import { dbReady, kamarTerisiDb, simpanOrder } from "@/lib/db";
 
 const gagal = (pesan, status = 400) => NextResponse.json({ error: pesan }, { status });
 
@@ -14,6 +15,7 @@ export async function POST(req) {
   const k = kamar.find((x) => x.id === String(body.kamarId || "").toUpperCase());
   if (!k) return gagal("Kamar tidak ditemukan.");
   if (k.terisi) return gagal(`Kamar ${k.id} sudah terisi.`);
+  if (dbReady() && (await kamarTerisiDb())[k.id]) return gagal(`Maaf, kamar ${k.id} baru saja dipesan orang lain.`);
 
   const nama = String(body.nama || "").trim();
   const hp = String(body.hp || "").replace(/[\s-]/g, "");
@@ -59,6 +61,12 @@ export async function POST(req) {
     if (!res.ok || !data.redirect_url) {
       console.error("Midtrans error", res.status, data);
       return gagal(data.error_messages?.join(", ") || "Gagal membuat transaksi pembayaran.", 502);
+    }
+    if (dbReady()) {
+      await simpanOrder({
+        id: orderId, kamarId: k.id, nama, hp, email, tanggalMasuk, durasi, total,
+        status: "pending", createdAt: new Date().toISOString(),
+      });
     }
     return NextResponse.json({ orderId, redirectUrl: data.redirect_url });
   } catch (e) {

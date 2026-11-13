@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { kamar, rupiah } from "@/lib/rooms";
+import { kamar as dataKamar, rupiah } from "@/lib/rooms";
 import RoomModal from "@/components/RoomModal";
 
-export default function PublicRooms() {
+export default function PublicRooms({ terisiIds = [] }) {
   const [dipilih, setDipilih] = useState(null);
+  const kamar = dataKamar.map((k) => ({ ...k, terisi: k.terisi || terisiIds.includes(k.id) }));
   const kosong = kamar.filter((k) => !k.terisi).length;
 
   return (

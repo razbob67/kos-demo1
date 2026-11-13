@@ -1,23 +1,15 @@
-"use client";
+import HomeClient from "@/components/HomeClient";
+import { dbReady, kamarTerisiDb } from "@/lib/db";
 
-import { useState } from "react";
-import Navbar from "@/components/Navbar";
-import PublicRooms from "@/components/PublicRooms";
-import TenantLogin from "@/components/TenantLogin";
+// Status kamar dibaca ulang setiap halaman dibuka (supaya kamar yang baru dibayar langsung "Penuh")
+export const dynamic = "force-dynamic";
 
-export default function Home() {
-  const [tab, setTab] = useState("publik");
-
-  return (
-    <>
-      <Navbar tab={tab} setTab={setTab} />
-      <main className="mx-auto max-w-5xl px-4 py-8">
-        {tab === "publik" && <PublicRooms />}
-        {tab === "penghuni" && <TenantLogin />}
-      </main>
-      <footer className="pb-8 text-center text-xs text-slate-400">
-        © Rumah Delman · Demo dengan data dummy
-      </footer>
-    </>
-  );
+export default async function Home() {
+  let terisiIds = [];
+  try {
+    if (dbReady()) terisiIds = Object.keys(await kamarTerisiDb());
+  } catch (e) {
+    console.error("DB error", e);
+  }
+  return <HomeClient terisiIds={terisiIds} />;
 }

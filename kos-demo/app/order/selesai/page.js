@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { API_BASE, authHeader } from "@/lib/midtrans";
 import { rupiah } from "@/lib/rooms";
+import { tandaiLunas, tandaiGagal } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Status Pembayaran — Rumah Delman", robots: { index: false } };
@@ -32,9 +33,14 @@ export default async function SelesaiPage({ searchParams }) {
 
   let tampil;
   const ts = s?.transaction_status;
+  const lunas = ts === "settlement" || (ts === "capture" && s?.fraud_status === "accept");
+  // Simpan hasil ke database (aman dipanggil berulang)
+  const order = lunas ? await tandaiLunas(orderId) : ["expire", "cancel", "deny", "failure"].includes(ts) ? await tandaiGagal(orderId, ts) : null;
   if (!s || s.status_code === "404") {
     tampil = { warna: "bg-slate-500", ikon: "?", judul: "Pesanan tidak ditemukan", teks: "Kami tidak menemukan transaksi ini. Kalau kamu baru saja membayar, tunggu sebentar lalu muat ulang halaman." };
-  } else if (ts === "settlement" || (ts === "capture" && s.fraud_status === "accept")) {
+  } else if (lunas && order?.status === "conflict") {
+    tampil = { warna: "bg-amber-500", ikon: "!", judul: "Pembayaran diterima, tapi kamar sudah terisi", teks: `Kamar ${kamarId} keburu dibayar pemesan lain beberapa saat sebelum kamu. Pemilik kos akan menghubungi kamu untuk pengembalian dana atau pindah kamar.` };
+  } else if (lunas) {
     tampil = { warna: "bg-emerald-600", ikon: "✓", judul: "Pembayaran berhasil!", teks: `Kamar ${kamarId} sudah kamu pesan. Pemilik kos akan menghubungi lewat WhatsApp untuk konfirmasi jadwal masuk dan PIN penghuni.` };
   } else if (ts === "pending") {
     tampil = { warna: "bg-amber-500", ikon: "⏳", judul: "Menunggu pembayaran", teks: "Selesaikan pembayaran sebelum batas waktu. Halaman ini akan menampilkan status terbaru setiap kali dimuat ulang." };
@@ -63,6 +69,14 @@ export default async function SelesaiPage({ searchParams }) {
                 <div className="flex justify-between px-4 py-2.5"><dt className="text-slate-500">Metode</dt><dd className="capitalize">{s.payment_type.replace(/_/g, " ")}</dd></div>
               )}
             </dl>
+          )}
+
+          {lunas && order?.pin && (
+            <div className="rounded-xl bg-emerald-50 p-4 text-center">
+              <p className="text-xs text-emerald-700">PIN login penghuni kamar {kamarId} — simpan baik-baik</p>
+              <p className="mt-1 font-mono text-4xl font-bold tracking-[0.3em] text-emerald-900">{order.pin}</p>
+              <p className="mt-2 text-xs text-emerald-700">Pakai di menu &quot;Login Penghuni&quot; untuk melihat tagihan.</p>
+            </div>
           )}
 
           {bayar && (

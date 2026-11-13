@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { serverKey } from "@/lib/midtrans";
+import { tandaiLunas, tandaiGagal } from "@/lib/db";
 
 // Webhook dari Midtrans (isi URL ini di Dashboard Midtrans →
 // Settings → Payment → Notification URL: https://<domain>/api/midtrans/notify).
 // Tanda tangan dicek supaya notifikasi palsu ditolak.
-// Catatan: belum ada database, jadi untuk sekarang status hanya dicatat di log Vercel.
 export async function POST(req) {
   const n = await req.json().catch(() => ({}));
   const expected = crypto
@@ -18,5 +18,8 @@ export async function POST(req) {
   }
 
   console.log(`[Midtrans] ${n.order_id} → ${n.transaction_status} (${n.payment_type}, Rp${n.gross_amount})`);
+  const ts = n.transaction_status;
+  if (ts === "settlement" || (ts === "capture" && n.fraud_status === "accept")) await tandaiLunas(n.order_id);
+  else if (["expire", "cancel", "deny", "failure"].includes(ts)) await tandaiGagal(n.order_id, ts);
   return NextResponse.json({ ok: true });
 }
