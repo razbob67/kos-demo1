@@ -2,6 +2,7 @@ import Link from "next/link";
 import { API_BASE, authHeader } from "@/lib/midtrans";
 import { rupiah } from "@/lib/rooms";
 import { tandaiLunas, tandaiGagal } from "@/lib/db";
+import { tandaiTagihanLunas, namaPeriode } from "@/lib/tagihan";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Status Pembayaran — Rumah Delman", robots: { index: false } };
@@ -10,7 +11,7 @@ export const metadata = { title: "Status Pembayaran — Rumah Delman", robots: {
 // supaya tidak bisa dipalsukan dengan mengubah link.
 async function cekStatus(orderId) {
   const auth = authHeader();
-  if (!auth || !/^RD-[A-Z0-9]+-\d+$/.test(orderId)) return null;
+  if (!auth || !/^(RD-[A-Z0-9]+-\d+|RT-[A-Z0-9]+-\d{6}-\d+)$/.test(orderId)) return null;
   const res = await fetch(`${API_BASE}/v2/${encodeURIComponent(orderId)}/status`, {
     headers: { Accept: "application/json", Authorization: auth },
     cache: "no-store",
@@ -30,22 +31,33 @@ export default async function SelesaiPage({ searchParams }) {
   const orderId = String(searchParams?.order_id || "");
   const s = orderId ? await cekStatus(orderId) : null;
   const kamarId = orderId.split("-")[1];
+  const isTagihan = orderId.startsWith("RT-");
+  const periodeTagihan = isTagihan ? `${orderId.split("-")[2].slice(0, 4)}-${orderId.split("-")[2].slice(4)}` : null;
 
   let tampil;
   const ts = s?.transaction_status;
   const lunas = ts === "settlement" || (ts === "capture" && s?.fraud_status === "accept");
   // Simpan hasil ke database (aman dipanggil berulang)
-  const order = lunas ? await tandaiLunas(orderId) : ["expire", "cancel", "deny", "failure"].includes(ts) ? await tandaiGagal(orderId, ts) : null;
+  let order = null;
+  if (isTagihan) {
+    if (lunas) await tandaiTagihanLunas(orderId);
+  } else if (lunas) {
+    order = await tandaiLunas(orderId);
+  } else if (["expire", "cancel", "deny", "failure"].includes(ts)) {
+    order = await tandaiGagal(orderId, ts);
+  }
   if (!s || s.status_code === "404") {
     tampil = { warna: "bg-slate-500", ikon: "?", judul: "Pesanan tidak ditemukan", teks: "Kami tidak menemukan transaksi ini. Kalau kamu baru saja membayar, tunggu sebentar lalu muat ulang halaman." };
   } else if (lunas && order?.status === "conflict") {
     tampil = { warna: "bg-amber-500", ikon: "!", judul: "Pembayaran diterima, tapi kamar sudah terisi", teks: `Kamar ${kamarId} keburu dibayar pemesan lain beberapa saat sebelum kamu. Pemilik kos akan menghubungi kamu untuk pengembalian dana atau pindah kamar.` };
+  } else if (lunas && isTagihan) {
+    tampil = { warna: "bg-emerald-600", ikon: "✓", judul: "Tagihan lunas!", teks: `Pembayaran sewa Kamar ${kamarId} untuk ${namaPeriode(periodeTagihan)} sudah kami terima. Terima kasih!` };
   } else if (lunas) {
     tampil = { warna: "bg-emerald-600", ikon: "✓", judul: "Pembayaran berhasil!", teks: `Kamar ${kamarId} sudah kamu pesan. Pemilik kos akan menghubungi lewat WhatsApp untuk konfirmasi jadwal masuk dan PIN penghuni.` };
   } else if (ts === "pending") {
     tampil = { warna: "bg-amber-500", ikon: "⏳", judul: "Menunggu pembayaran", teks: "Selesaikan pembayaran sebelum batas waktu. Halaman ini akan menampilkan status terbaru setiap kali dimuat ulang." };
   } else {
-    tampil = { warna: "bg-rose-600", ikon: "✕", judul: "Pembayaran tidak berhasil", teks: `Status: ${ts || "gagal"}. Kamar belum terpesan, silakan coba pesan lagi.` };
+    tampil = { warna: "bg-rose-600", ikon: "✕", judul: "Pembayaran tidak berhasil", teks: `Status: ${ts || "gagal"}. ${isTagihan ? "Tagihan belum terbayar, silakan coba lagi dari link tagihan." : "Kamar belum terpesan, silakan coba pesan lagi."}` };
   }
 
   const bayar = ts === "pending" ? nomorBayar(s) : null;

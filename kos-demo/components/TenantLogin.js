@@ -39,8 +39,12 @@ export default function TenantLogin() {
   };
 
   if (user) {
-    const bulanIni = user.tagihan[0];
-    const lunas = bulanIni.status === "Lunas";
+    const b = user.tagihanBulanIni;
+    const t0 = user.tagihan[0];
+    const bulanIni = b
+      ? { bulan: b.label, jumlah: b.jumlah, lunas: b.lunas, tanggalBayar: b.tanggalBayar, jatuhTempo: b.jatuhTempo, bayarUrl: b.bayarUrl }
+      : { bulan: t0.bulan, jumlah: t0.jumlah, lunas: t0.status === "Lunas", tanggalBayar: t0.tanggalBayar, jatuhTempo: t0.jatuhTempo };
+    const lunas = bulanIni.lunas;
 
     return (
       <section className="mx-auto max-w-2xl space-y-6">
@@ -59,8 +63,18 @@ export default function TenantLogin() {
           <p className="text-sm opacity-90">Tagihan {bulanIni.bulan}</p>
           <p className="mt-1 text-3xl font-bold">{rupiah(bulanIni.jumlah)}</p>
           <p className="mt-3 inline-block rounded-full bg-white/20 px-3 py-1 text-sm font-semibold">
-            {lunas ? `✓ Lunas — dibayar ${tanggal(bulanIni.tanggalBayar)}` : `Belum dibayar — jatuh tempo ${tanggal(bulanIni.jatuhTempo)}`}
+            {lunas
+              ? `✓ Lunas${bulanIni.tanggalBayar ? ` — dibayar ${tanggal(bulanIni.tanggalBayar)}` : ""}`
+              : `Belum dibayar${bulanIni.jatuhTempo ? ` — jatuh tempo ${tanggal(bulanIni.jatuhTempo)}` : ""}`}
           </p>
+          {!lunas && bulanIni.bayarUrl && (
+            <a
+              href={bulanIni.bayarUrl}
+              className="mt-4 block rounded-xl bg-white py-3 text-center font-semibold text-amber-700 transition hover:bg-amber-50"
+            >
+              Bayar sekarang →
+            </a>
+          )}
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">

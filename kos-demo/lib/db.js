@@ -22,6 +22,15 @@ async function cmd(...args) {
   return j.result;
 }
 
+export async function getJSON(key) {
+  const v = await cmd("GET", key);
+  return v ? JSON.parse(v) : null;
+}
+
+export async function setJSON(key, val) {
+  await cmd("SET", key, JSON.stringify(val));
+}
+
 // ---------- Pesanan ----------
 export async function simpanOrder(o) {
   await cmd("SET", `order:${o.id}`, JSON.stringify(o));

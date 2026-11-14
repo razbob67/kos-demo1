@@ -2,7 +2,10 @@ import Link from "next/link";
 import OwnerDashboard from "@/components/OwnerDashboard";
 import { kamar, NAMA_KOS, rupiah } from "@/lib/rooms";
 import { penghuni, riwayatPendapatan } from "@/lib/private";
+import { headers } from "next/headers";
 import { dbReady, daftarOrder, kamarTerisiDb } from "@/lib/db";
+import { tagihanBulanIni, linkBayar } from "@/lib/tagihan";
+import TagihanPanel from "@/components/TagihanPanel";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Admin — Rumah Delman", robots: { index: false, follow: false } };
@@ -28,9 +31,23 @@ export default async function AdminPage() {
   }
   const byId = Object.fromEntries(orders.map((o) => [o.id, o]));
 
+  let tagihan = [];
+  try {
+    tagihan = await tagihanBulanIni();
+  } catch (e) {
+    console.error("Tagihan error", e);
+  }
+  const tagihanKamar = Object.fromEntries(tagihan.map((t) => [t.kamarId, t]));
+  const h = headers();
+  const origin = `${h.get("x-forwarded-proto") || "https"}://${h.get("host")}`;
+
   // Gabungkan data penghuni lama (file) + penghuni baru (pesanan online lunas)
   const data = kamar.map((k) => {
-    if (penghuni[k.id]) return { ...k, penghuni: { nama: penghuni[k.id].nama, tagihan: penghuni[k.id].tagihan } };
+    if (penghuni[k.id]) {
+      const tg = tagihanKamar[k.id];
+      const riwayat = penghuni[k.id].tagihan.map((x) => (tg?.lunas && x.bulan === tg.label ? { ...x, status: "Lunas" } : x));
+      return { ...k, penghuni: { nama: penghuni[k.id].nama, tagihan: riwayat } };
+    }
     const o = byId[terisiDb[k.id]];
     if (terisiDb[k.id]) {
       return {
@@ -66,6 +83,8 @@ export default async function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-5xl space-y-8 px-4 py-8">
+        <TagihanPanel tagihan={tagihan} origin={origin} linkBayar={linkBayar} />
+
         <OwnerDashboard kamar={data} riwayatPendapatan={riwayatPendapatan} />
 
         <section className="space-y-3">

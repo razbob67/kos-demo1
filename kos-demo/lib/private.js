@@ -4,6 +4,7 @@
 export const penghuni = {
   A1: {
     nama: "Budi Santoso",
+    hp: "081234500001", // ganti dengan nomor WA asli penghuni
     pin: "1234",
     masuk: "2026-03-01",
     tagihan: [
@@ -14,6 +15,7 @@ export const penghuni = {
   },
   A2: {
     nama: "Siti Rahma",
+    hp: "081234500002",
     pin: "5678",
     masuk: "2026-06-15",
     tagihan: [
@@ -24,6 +26,7 @@ export const penghuni = {
   },
   B2: {
     nama: "Andi Wijaya",
+    hp: "081234500003",
     pin: "4321",
     masuk: "2026-01-10",
     tagihan: [

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { penghuni } from "@/lib/private";
 import { kamar } from "@/lib/rooms";
 import { dbReady, penghuniDb } from "@/lib/db";
+import { daftarPenghuni, statusTagihan, linkBayar } from "@/lib/tagihan";
 
 // PIN dicek di server, jadi PIN penghuni lain tidak pernah sampai ke browser.
 export async function POST(req) {
@@ -27,10 +28,35 @@ export async function POST(req) {
   }
 
   const k = kamar.find((x) => x.id === id);
+
+  // Status tagihan bulan ini (termasuk yang dibayar lewat link tagihan)
+  let bulanIni = null;
+  try {
+    const info = (await daftarPenghuni()).find((x) => x.kamarId === id);
+    if (info) bulanIni = await statusTagihan(info);
+  } catch (e) {
+    console.error(e);
+  }
+
+  const tagihan = p.tagihan.map((t) =>
+    bulanIni?.lunas && t.bulan === bulanIni.label ? { ...t, status: "Lunas", tanggalBayar: bulanIni.tanggalBayar || t.tanggalBayar } : t
+  );
+  if (bulanIni && !tagihan.some((t) => t.bulan === bulanIni.label)) {
+    tagihan.unshift({ bulan: bulanIni.label, jumlah: bulanIni.jumlah, status: bulanIni.lunas ? "Lunas" : "Belum Bayar", jatuhTempo: bulanIni.jatuhTempo, tanggalBayar: bulanIni.tanggalBayar });
+  }
+
   return NextResponse.json({
     kamar: { id: k.id, tipe: k.tipe },
     nama: p.nama,
     masuk: p.masuk,
-    tagihan: p.tagihan,
+    tagihan,
+    tagihanBulanIni: bulanIni && {
+      label: bulanIni.label,
+      jumlah: bulanIni.jumlah,
+      lunas: bulanIni.lunas,
+      jatuhTempo: bulanIni.jatuhTempo,
+      tanggalBayar: bulanIni.tanggalBayar,
+      bayarUrl: bulanIni.lunas ? null : linkBayar(id, bulanIni.periode),
+    },
   });
 }
