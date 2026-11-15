@@ -140,7 +140,7 @@ export default function RoomModal({ room, onClose }) {
         <div className="space-y-6 p-5 sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-2">
             <div>
-              <p className="text-sm text-slate-500">Lantai {room.lantai} · {room.tipe}</p>
+              <p className="text-sm text-slate-500">Blok {room.blok} · {room.tipe}</p>
               <h2 className="text-3xl font-bold">Kamar {room.id}</h2>
             </div>
             <p className="text-2xl font-bold text-indigo-700">

@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { rupiah } from "@/lib/rooms";
+import { rupiah, BIAYA_MOBIL } from "@/lib/rooms";
 
 const DURASI = [1, 3, 6, 12];
 const hariIni = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" });
 
 export default function BookingForm({ room, onBack }) {
-  const [form, setForm] = useState({ nama: "", hp: "", email: "", tanggalMasuk: hariIni(), durasi: 1 });
+  const [form, setForm] = useState({ nama: "", hp: "", email: "", tanggalMasuk: hariIni(), durasi: 1, mobil: false });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const total = room.harga * Number(form.durasi);
+  const perBulan = room.harga + (form.mobil ? BIAYA_MOBIL : 0);
+  const total = perBulan * Number(form.durasi);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -77,9 +78,19 @@ export default function BookingForm({ room, onBack }) {
         </label>
       </div>
 
+      <label className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 text-sm">
+        <input
+          type="checkbox"
+          checked={form.mobil}
+          onChange={(e) => setForm((f) => ({ ...f, mobil: e.target.checked }))}
+          className="h-4 w-4 accent-indigo-600"
+        />
+        <span>Saya membawa mobil <span className="text-slate-500">(+{rupiah(BIAYA_MOBIL)}/bulan)</span></span>
+      </label>
+
       <div className="rounded-xl bg-slate-50 p-4">
         <div className="flex justify-between text-sm text-slate-600">
-          <span>{rupiah(room.harga)} × {form.durasi} bulan</span>
+          <span>{rupiah(perBulan)} × {form.durasi} bulan{form.mobil ? " (termasuk mobil)" : ""}</span>
           <span>{rupiah(total)}</span>
         </div>
         <div className="mt-2 flex justify-between border-t border-slate-200 pt-2 text-lg font-bold">

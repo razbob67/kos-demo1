@@ -46,7 +46,7 @@ export default async function AdminPage() {
     if (penghuni[k.id]) {
       const tg = tagihanKamar[k.id];
       const riwayat = penghuni[k.id].tagihan.map((x) => (tg?.lunas && x.bulan === tg.label ? { ...x, status: "Lunas" } : x));
-      return { ...k, penghuni: { nama: penghuni[k.id].nama, tagihan: riwayat } };
+      return { ...k, penghuni: { nama: penghuni[k.id].nama, hp: penghuni[k.id].hp, mobil: penghuni[k.id].mobil, tagihan: riwayat } };
     }
     const o = byId[terisiDb[k.id]];
     if (terisiDb[k.id]) {

@@ -144,7 +144,7 @@ export default function TenantLogin() {
 
         <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-500">
           <p className="font-semibold text-slate-600">Akun demo:</p>
-          <p>A1 / 1234 · A2 / 5678 · B2 / 4321</p>
+          <p>A1 / 1234 · A2 / 5678 · B2 / 4321 (data dummy)</p>
         </div>
       </form>
     </section>

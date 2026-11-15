@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { kamar } from "@/lib/rooms";
+import { kamar, BIAYA_MOBIL } from "@/lib/rooms";
 import { SNAP_URL, authHeader, DURASI } from "@/lib/midtrans";
 import { dbReady, kamarTerisiDb, simpanOrder } from "@/lib/db";
 
@@ -22,6 +22,7 @@ export async function POST(req) {
   const email = String(body.email || "").trim();
   const tanggalMasuk = String(body.tanggalMasuk || "");
   const durasi = Number(body.durasi);
+  const mobil = body.mobil === true;
 
   if (nama.length < 2 || nama.length > 50) return gagal("Nama wajib diisi (2–50 karakter).");
   if (!/^(\+62|62|0)8\d{7,12}$/.test(hp)) return gagal("Nomor HP tidak valid. Contoh: 081234567890.");
@@ -32,7 +33,8 @@ export async function POST(req) {
   const hariIni = new Date(new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" }) + "T00:00:00+07:00");
   if (isNaN(tgl) || tgl < hariIni) return gagal("Tanggal masuk tidak boleh sebelum hari ini.");
 
-  const total = k.harga * durasi;
+  const perBulan = k.harga + (mobil ? BIAYA_MOBIL : 0);
+  const total = perBulan * durasi;
   const orderId = `RD-${k.id}-${Date.now()}`;
   const origin = new URL(req.url).origin;
 
@@ -40,6 +42,7 @@ export async function POST(req) {
     transaction_details: { order_id: orderId, gross_amount: total },
     item_details: [
       { id: `KAMAR-${k.id}`, price: k.harga, quantity: durasi, name: `Sewa Kamar ${k.id} (per bulan)` },
+      ...(mobil ? [{ id: "MOBIL", price: BIAYA_MOBIL, quantity: durasi, name: "Tambahan bawa mobil (per bulan)" }] : []),
     ],
     customer_details: {
       first_name: nama,
@@ -64,7 +67,7 @@ export async function POST(req) {
     }
     if (dbReady()) {
       await simpanOrder({
-        id: orderId, kamarId: k.id, nama, hp, email, tanggalMasuk, durasi, total,
+        id: orderId, kamarId: k.id, nama, hp, email, tanggalMasuk, durasi, mobil, total,
         status: "pending", createdAt: new Date().toISOString(),
       });
     }

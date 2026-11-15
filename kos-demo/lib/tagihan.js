@@ -2,7 +2,7 @@
 // Sumber penghuni: lib/private.js (penghuni lama) + pesanan online yang lunas (database).
 // Status tagihan per kamar per bulan disimpan di key "tagihan:{kamar}:{YYYY-MM}".
 import crypto from "crypto";
-import { kamar } from "@/lib/rooms";
+import { kamar, BIAYA_MOBIL } from "@/lib/rooms";
 import { penghuni } from "@/lib/private";
 import { dbReady, kamarTerisiDb, ambilOrder, getJSON, setJSON } from "@/lib/db";
 
@@ -36,10 +36,10 @@ export async function daftarPenghuni() {
   for (const k of kamar) {
     const p = penghuni[k.id];
     if (p) {
-      hasil.push({ kamarId: k.id, nama: p.nama, hp: p.hp, harga: k.harga, masuk: p.masuk, sumber: "file" });
+      hasil.push({ kamarId: k.id, nama: p.nama, hp: p.hp, harga: k.harga + (p.mobil ? BIAYA_MOBIL : 0), mobil: !!p.mobil, masuk: p.masuk, sumber: "file" });
     } else if (terisi[k.id]) {
       const o = await ambilOrder(terisi[k.id]);
-      if (o) hasil.push({ kamarId: k.id, nama: o.nama, hp: o.hp, harga: k.harga, masuk: o.tanggalMasuk, sumber: "online", durasi: o.durasi });
+      if (o) hasil.push({ kamarId: k.id, nama: o.nama, hp: o.hp, harga: k.harga + (o.mobil ? BIAYA_MOBIL : 0), mobil: !!o.mobil, masuk: o.tanggalMasuk, sumber: "online", durasi: o.durasi });
     }
   }
   return hasil;

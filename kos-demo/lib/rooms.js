@@ -1,83 +1,59 @@
 // Data PUBLIK kamar — aman tampil di browser siapa pun.
 // Data penghuni, PIN, dan keuangan ada di lib/private.js (hanya di server).
-// Foto ada di folder public/rooms/. Foto pertama dipakai sebagai sampul kartu.
 
 export const NAMA_KOS = "Rumah Delman";
+export const BIAYA_MOBIL = 100000; // tambahan per bulan kalau penghuni membawa mobil
 
-export const kamar = [
-  {
-    id: "A1",
-    lantai: 1,
-    tipe: "Kamar Mandi Dalam + AC",
-    harga: 1500000,
-    terisi: true,
-    deskripsi: "Kamar paling luas dengan jendela besar dan gorden blackout. Kamar mandi dalam sudah dilengkapi water heater.",
-    fasilitas: {
-      ukuran: "3 × 4 m",
-      kasur: "Spring bed Queen (160 × 200)",
-      pendingin: "AC",
-      wifi: "Wi-Fi 50 Mbps (unlimited)",
-      kamarMandi: "Kamar mandi dalam: shower + water heater, kloset duduk, bidet",
-      perabot: ["Meja kayu & kursi", "Lemari pakaian", "Gorden blackout + vitrase"],
-      listrik: "Termasuk harga sewa",
-    },
-    foto: ["/rooms/A1-1.jpg", "/rooms/A1-2.jpg", "/rooms/A1-3.jpg", "/rooms/A1-4.jpg", "/rooms/A1-5.jpg", "/rooms/A1-6.jpg"],
-  },
-  {
-    id: "A2",
-    lantai: 1,
-    tipe: "Kamar Mandi Dalam + AC",
-    harga: 1500000,
-    terisi: true,
-    deskripsi: "Kamar dengan pintu langsung menghadap halaman berumput. Kasur double dan kamar mandi dalam.",
-    fasilitas: {
-      ukuran: "3 × 4 m",
-      kasur: "Kasur double",
-      pendingin: "AC",
-      wifi: "Wi-Fi 50 Mbps (unlimited)",
-      kamarMandi: "Kamar mandi dalam: shower, kloset duduk, bidet",
-      perabot: ["Meja & kursi rotan", "Lemari dengan cermin", "Rak handuk"],
-      listrik: "Termasuk harga sewa",
-    },
-    foto: ["/rooms/A2-1.jpg", "/rooms/A2-2.jpg", "/rooms/A2-3.jpg"],
-  },
-  {
-    id: "B1",
-    lantai: 2,
-    tipe: "Kamar Mandi Dalam + AC",
-    harga: 1000000,
-    terisi: false,
-    deskripsi: "Kamar single yang ringkas dan nyaman, kamar mandi dalam lengkap dengan wastafel.",
-    fasilitas: {
-      ukuran: "3 × 3 m",
-      kasur: "Spring bed Single",
-      pendingin: "AC",
-      wifi: "Wi-Fi 50 Mbps (unlimited)",
-      kamarMandi: "Kamar mandi dalam: shower, wastafel, kloset duduk",
-      perabot: ["Meja & kursi rotan", "Keset"],
-      listrik: "Termasuk harga sewa",
-    },
-    foto: ["/rooms/B1-1.jpg", "/rooms/B1-2.jpg"],
-  },
-  {
-    id: "B2",
-    lantai: 2,
-    tipe: "Kamar Mandi Luar + AC",
-    harga: 1000000,
-    terisi: true,
-    deskripsi: "Kamar single dengan meja belajar, cermin, dan lemari. Cocok untuk mahasiswa.",
-    fasilitas: {
-      ukuran: "3 × 3 m",
-      kasur: "Kasur Single",
-      pendingin: "AC",
-      wifi: "Wi-Fi 50 Mbps (unlimited)",
-      kamarMandi: "Kamar mandi luar bersama, shower",
-      perabot: ["Meja belajar dengan rak", "Kursi", "Lemari 2 pintu + laci", "Cermin"],
-      listrik: "Termasuk harga sewa",
-    },
-    foto: ["/rooms/B2-1.jpg", "/rooms/B2-2.jpg"],
-  },
+const deret = (prefix, dari, sampai, harga) =>
+  Array.from({ length: sampai - dari + 1 }, (_, i) => ({ id: `${prefix}${dari + i}`, harga }));
+
+// Daftar kamar & harga sewa per bulan
+const DAFTAR = [
+  ...deret("A", 1, 9, 2000000),
+  ...deret("B", 1, 10, 2100000),
+  ...deret("B", 11, 17, 1600000),
+  ...deret("C", 1, 9, 1800000),
+  { id: "BX1", harga: 3000000 },
+  { id: "BX2", harga: 3500000 },
+  ...deret("BX", 3, 6, 2100000),
+  ...deret("AX", 1, 2, 3000000),
 ];
+
+// Kamar yang sedang kosong (data dummy)
+const KOSONG = ["A7", "B9", "B14", "C3", "C6", "BX4"];
+
+// Foto per kamar (file di public/rooms). Kamar tanpa foto menampilkan placeholder.
+const FOTO = {
+  B16: ["/rooms/B16-1.jpg", "/rooms/B16-2.jpg", "/rooms/B16-3.jpg"],
+  C8: ["/rooms/C8-1.jpg"],
+};
+
+// Fasilitas CONTOH — sesuaikan dengan kondisi kamar yang sebenarnya
+const FASILITAS = {
+  ukuran: "Standar",
+  kasur: "Kasur + sprei",
+  pendingin: "AC",
+  wifi: "Wi-Fi",
+  kamarMandi: "Kamar mandi dalam",
+  perabot: ["Lemari", "Meja", "Kursi"],
+  listrik: "Termasuk harga sewa",
+};
+
+export const URUTAN_BLOK = ["A", "AX", "B", "BX", "C"];
+
+export const kamar = DAFTAR.map(({ id, harga }) => {
+  const blok = id.replace(/\d+$/, "");
+  return {
+    id,
+    blok,
+    tipe: "AC · Kamar mandi dalam",
+    harga,
+    terisi: !KOSONG.includes(id),
+    deskripsi: `Kamar ${id} di Blok ${blok}. Bawa mobil dikenakan tambahan Rp100.000/bulan.`,
+    fasilitas: FASILITAS,
+    foto: FOTO[id] || [],
+  };
+});
 
 // Fasilitas yang dipakai bersama semua penghuni
 export const fasilitasBersama = [

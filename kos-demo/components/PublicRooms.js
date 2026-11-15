@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { kamar as dataKamar, rupiah } from "@/lib/rooms";
+import { kamar as dataKamar, rupiah, URUTAN_BLOK } from "@/lib/rooms";
 import RoomModal from "@/components/RoomModal";
 
 export default function PublicRooms({ terisiIds = [] }) {
@@ -24,8 +24,18 @@ export default function PublicRooms({ terisiIds = [] }) {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {kamar.map((k) => (
+      {URUTAN_BLOK.map((blok) => {
+        const isi = kamar.filter((k) => k.blok === blok);
+        if (!isi.length) return null;
+        const sisa = isi.filter((k) => !k.terisi).length;
+        return (
+      <div key={blok} className="mb-8">
+        <div className="mb-3 flex items-baseline gap-3">
+          <h2 className="text-lg font-bold">Blok {blok}</h2>
+          <span className="text-sm text-slate-500">{isi.length} kamar · {sisa > 0 ? `${sisa} kosong` : "penuh"}</span>
+        </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {isi.map((k) => (
           <button
             key={k.id}
             onClick={() => setDipilih(k)}
@@ -33,16 +43,15 @@ export default function PublicRooms({ terisiIds = [] }) {
               k.terisi ? "border-rose-200" : "border-emerald-200"
             }`}
           >
-            <div className={`flex items-center justify-between px-5 py-4 ${k.terisi ? "bg-rose-500" : "bg-emerald-500"}`}>
-              <span className="text-3xl font-bold text-white">{k.id}</span>
-              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white">
+            <div className={`flex items-center justify-between px-4 py-3 ${k.terisi ? "bg-rose-500" : "bg-emerald-500"}`}>
+              <span className="text-2xl font-bold text-white">{k.id}</span>
+              <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
                 {k.terisi ? "Penuh" : "Kosong"}
               </span>
             </div>
-            <div className="space-y-1 px-5 py-4 text-sm">
-              <p className="text-slate-500">Lantai {k.lantai}</p>
-              <p className="font-medium">{k.tipe}</p>
-              <p className="pt-2 text-lg font-semibold text-slate-900">
+            <div className="space-y-1 px-4 py-3 text-sm">
+              <p className="text-xs text-slate-500">{k.tipe}</p>
+              <p className="text-base font-semibold text-slate-900">
                 {rupiah(k.harga)}
                 <span className="text-xs font-normal text-slate-500"> /bulan</span>
               </p>
@@ -51,6 +60,9 @@ export default function PublicRooms({ terisiIds = [] }) {
           </button>
         ))}
       </div>
+      </div>
+        );
+      })}
 
       {dipilih && <RoomModal room={dipilih} onClose={() => setDipilih(null)} />}
     </section>

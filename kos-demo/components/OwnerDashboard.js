@@ -96,7 +96,16 @@ export default function OwnerDashboard({ kamar, riwayatPendapatan }) {
                     <span className={`mr-2 inline-block h-2.5 w-2.5 rounded-full ${k.terisi ? "bg-rose-500" : "bg-emerald-500"}`} />
                     {k.id}
                   </td>
-                  <td className="px-5 py-3">{k.penghuni?.nama ?? <span className="text-slate-400">— Kosong —</span>}</td>
+                  <td className="px-5 py-3">
+                    {k.penghuni ? (
+                      <>
+                        <p>{k.penghuni.nama}{k.penghuni.mobil && <span title="Bawa mobil"> 🚗</span>}</p>
+                        {k.penghuni.hp && <p className="text-xs text-slate-400">{k.penghuni.hp}</p>}
+                      </>
+                    ) : (
+                      <span className="text-slate-400">— Kosong —</span>
+                    )}
+                  </td>
                   <td className="px-5 py-3">{rupiah(k.harga)}</td>
                   <td className="px-5 py-3">
                     {t ? (
